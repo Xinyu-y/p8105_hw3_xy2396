@@ -151,17 +151,18 @@ Two-panel plot showing distribution of data_value for responses (“Poor” to �
 #Filter NY state and year
 ny_value = 
   brfss %>% filter(year %in% c("2006", "2010"), locationabbr == "NY") %>% 
-  select(year, response, data_value)
+  select(year, response, data_value, locationdesc)
 
-#Make boxplot
+#Make plot
 ny_value %>% 
-  ggplot(aes(x = response, y = data_value)) +
-  geom_boxplot() +
-  facet_grid(~year) +
-  labs(y = "Data Value", x = "Response") 
+  ggplot() +
+  geom_bar(aes(fill = response, x = locationdesc, y = data_value), position = position_stack(reverse = TRUE), stat = "identity") +
+  facet_grid(~year) + 
+  viridis::scale_fill_viridis(discrete = TRUE) +
+  theme(axis.text.x = element_text(angle = 55, hjust = 1)) +
+  labs(y = "Data Value", x = "Locations") 
 ```
 
-Comparing the plots for 2006 and 2010, we can see that the median data value in each response group did not change much except the small elevation in the 'very good' group.
 
 ## Problem 3
 
