@@ -18,7 +18,10 @@ data("instacart")
 ```
 
 The data 'instacart' contains `r nrow(instacart)` observations and `r ncol(instacart)` variables. 
-There are four character vairables: 'eval_set', 'product_name', 'aisle', and 'department'; and the other variables are all integer, such as 'order_id', 'order_number', 'order_dow'. Here listed few observations as example:
+
+There are four character vairables: 'eval_set'(which evaluation set this order belongs in), 'product_name'(name of product), 'aisle'(name of aisle), and 'department'(name of department);
+All the other variables are integer, such as 'order_id'(order identifier), 'order_dow'(day of the week on which the order was placed), and 'order_hour_of_day'(the hour of the day on which the order was placed). 
+Here listed few observations as example:
 ```{r echo=FALSE}
 head(instacart, n = 3) %>% knitr::kable()
 ```
@@ -35,7 +38,9 @@ head(aisle, n = 1) %>% knitr::kable(align = 'l')
 
 There are `r nrow(aisle)` aisles, and most items are ordered from aisle number 83 "fresh vegetables".
 
+<br>
 
+Plot of the number of items ordered in each aisle
 ```{r}
 aisle %>% filter(n > 10000) %>% arrange(desc(n)) %>% 
   ggplot(aes(x = aisle, y = n)) +
@@ -46,7 +51,9 @@ aisle %>% filter(n > 10000) %>% arrange(desc(n)) %>%
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 55, hjust = 1))
 ```
+ 
 
+<br>
 Among the aisle  “baking ingredients”, “dog food care”, and “packaged vegetables fruits”, the three most popular and their times of being ordered are shown in table below:
 
 ```{r}
@@ -60,6 +67,8 @@ popular_item =
 popular_item %>% knitr::kable(align = 'l')
 
 ```
+
+<br>
 
 The mean hour of the day at which "Pink Lady Apples" and "Coffee Ice Cream" are ordered on each day of the week are shown below:
 ```{r}
@@ -152,3 +161,55 @@ Comparing the plots for 2006 and 2010, we can see that the median data value in 
 
 ## Problem 3
 
+Read in and clean dataset
+```{r message=FALSE}
+accel =
+  read_csv("./dataset/accel_data.csv") %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    workday = case_when(day %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday") ~ "weekday",
+                               day %in% c("Saturday", "Sunday") ~ "weekend"),
+    day = as.factor(day), 
+    day = fct_relevel(day, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>% 
+  select(week, day_id, workday, day, everything()) 
+```
+
+The 'accel' dataset contains `r nrow(accel)` observations and `r ncol(accel)` variables. 
+The variable "week", "day", and "workday" indicate the week, the day of the week, and whether it was a weekday or weekend of each observed day; and the variables "activity_n" contain the activity counts for each minute of a 24-hour day.
+
+```{r}
+#Compute the sum of activities of each day
+accel_sum =
+  accel %>% 
+  mutate(sum_day = rowSums(.[5:1444])) %>% 
+  select(week, day_id, workday, day, sum_day) %>% 
+  group_by(week) 
+
+#Line chart of activities of each day across weeks
+accel_sum %>%
+  ggplot(aes(x = day, y = sum_day, color = week)) +
+  geom_point() +
+  geom_line(aes(group = week)) +
+  labs(x = "Day of Week", y = "Daily Activity Sum")
+```
+We can see from the resulting graph that, during the first three weeks, the daily total activity was roughly increacing from Monday to Sunday; but in the 4th and 5th week, the total activity increased a bit during weekdays then dopped dramatically on Saturday.
+
+```{r}
+#Compute the hourly activity for each day
+hour_act = sapply(seq(5,1444,by = 60),function(i) rowSums(accel[,i:(i + 59)]))
+sum_hour = cbind(accel, hour_act) %>% select(-starts_with("activity")) %>% 
+  pivot_longer('1':'24', names_to = "hour", values_to = "activity" ) %>% 
+  mutate(hour = as.numeric(hour)) %>% 
+  arrange(day_id, hour)
+
+#Plot the 24-hour activity time courses for each day
+sum_hour %>% 
+  ggplot(aes(x = hour, y = activity, color = day)) +
+  geom_line(aes(group = day_id)) +
+  scale_x_continuous(
+    breaks = seq(1, 24, by = 1), 
+    limits = c(1, 24)) +
+  labs(x = "Hour of Day", y = "Hourly Activity")
+```
+
+From the resulting graph we can see that the activities fluctuated most at mid-day of Sundays, and at night of Fridays; and there were some fluctuation on Wednesday, Saturday, and Monday.
