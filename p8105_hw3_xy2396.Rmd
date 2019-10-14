@@ -1,6 +1,6 @@
 ---
 title: "Homework 3"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r results='hide', message=FALSE}
 library(tidyverse)
 library(ggridges)
+devtools::install_github("p8105/p8105.datasets")
 library(p8105.datasets)
 data("instacart")
 ```
@@ -76,6 +77,78 @@ hour %>% knitr::kable(align = 'c', digits = 1)
 
 ```
 
+## Problem 2
+
+Load the data from package:
+```{r}
+data(brfss_smart2010)
+brfss =
+  brfss_smart2010 %>% janitor::clean_names() %>% 
+  filter(
+    topic == "Overall Health",
+    response %in% c("Excellent", "Very good", "Good", "Fair", "Poor")
+    ) %>% 
+  mutate(
+    response = as.factor(response), 
+    response = fct_relevel(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))) %>% 
+  arrange(response)
+
+```
+
+Find the states that were observed at 7 or more locations:
+```{r}
+#In 2002:
+brfss %>% filter(year == "2002") %>% 
+  group_by(locationabbr) %>% 
+  summarise(number_observed = n_distinct(locationdesc))  %>% 
+  filter(number_observed >= 7) %>% 
+  knitr::kable()
+```
+
+In 2002, CT, FL, MA, NC, NJ and PA were observed at 7 or more locations;
+
+```{r}
+#In 2010:
+brfss %>% filter(year == "2010") %>% 
+  group_by(locationabbr) %>% 
+  summarise(number_observed = n_distinct(locationdesc))  %>% 
+  filter(number_observed >= 7) %>% 
+  knitr::kable()
+```
+
+In 2010, CA, CO, FL, MA, MD, NC, NE, NJ, NY and OH were observed at 7 or more locations.
 
 
+
+```{r}
+#Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state
+average = 
+  brfss %>% filter(response == "Excellent") %>% 
+  group_by(year, locationabbr) %>% 
+  summarise(avg_value = mean(data_value, na.rm = TRUE)) %>% 
+  rename(state = locationabbr) 
+#“Spaghetti” plot of this average value over time within a state
+average %>%   
+  ggplot(aes(x = year, y = avg_value)) +
+  geom_line(aes(group = state)) +
+  labs(y = "Average Data Value")
+```
+
+Two-panel plot showing distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State for the years 2006 and 2010 :
+```{r}
+#Filter NY state and year
+ny_value = 
+  brfss %>% filter(year %in% c("2006", "2010"), locationabbr == "NY") %>% 
+  select(year, response, data_value)
+
+#Make boxplot
+ny_value %>% 
+  ggplot(aes(x = response, y = data_value)) +
+  geom_boxplot() +
+  facet_grid(~year) +
+  labs(y = "Data Value", x = "Response") 
+```
+Comparing the plots for 2006 and 2010, we can see that the median data value in each response group did not change much except the small elevation in the 'very good' group.
+
+## Problem 3
 
