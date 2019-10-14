@@ -1,5 +1,6 @@
 ---
 title: "Homework 3"
+author: "Xinyu Yang"
 output: github_document
 ---
 
@@ -25,6 +26,8 @@ Here listed few observations as example:
 ```{r echo=FALSE}
 head(instacart, n = 3) %>% knitr::kable()
 ```
+
+<br>
 
 ```{r}
 aisle = 
@@ -157,6 +160,7 @@ ny_value %>%
   facet_grid(~year) +
   labs(y = "Data Value", x = "Response") 
 ```
+
 Comparing the plots for 2006 and 2010, we can see that the median data value in each response group did not change much except the small elevation in the 'very good' group.
 
 ## Problem 3
@@ -192,6 +196,7 @@ accel_sum %>%
   geom_line(aes(group = week)) +
   labs(x = "Day of Week", y = "Daily Activity Sum")
 ```
+
 We can see from the resulting graph that, during the first three weeks, the daily total activity was roughly increacing from Monday to Sunday; but in the 4th and 5th week, the total activity increased a bit during weekdays then dopped dramatically on Saturday.
 
 ```{r}
